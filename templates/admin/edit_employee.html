@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Employee - {{ employee.first_name }} {{ employee.last_name }} - MetroData</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Additional styles for edit page */
+        .edit-header {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 20px;
+        }
+
+        .edit-header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .current-file-info {
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: #f0fdf4;
+            border: 1px solid #10b981;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: #059669;
+        }
+
+        .current-file-info a {
+            color: #059669;
+            text-decoration: none;
+        }
+
+        .current-file-info a:hover {
+            text-decoration: underline;
+        }
+
+        .hidden-input {
+            display: none;
+        }
+
+        .employee-id-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            margin-left: 10px;
+        }
+
+        /* Loading state for dropdowns */
+        .form-control.loading {
+            background: #f9f9f9;
+            color: #666;
+        }
+
+        .form-control.loading::after {
+            content: " (Loading...)";
+        }
+
+        /* Success state */
+        .form-control.loaded {
+            border-left: 3px solid #10b981;
+        }
+
+        /* Error state */
+        .form-control.error {
+            border-left: 3px solid #dc2626;
+        }
+    </style>
+</head>
+<body>
+    <!-- Edit Header -->
+    <div class="edit-header">
+        <div class="edit-header-content">
+            <div>
+                <h1>Edit Employee</h1>
+                <span class="employee-id-badge">ID: {{ employee.id }}</span>
+            </div>
+            <a href="{{ url_for('view_employee', employee_id=employee.id) }}" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Back to View
+            </a>
+        </div>
+    </div>
+
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-user-edit"></i>
+                <h1>MetroData</h1>
+            </div>
+            <h2>Edit Employee: {{ employee.first_name }} {% if employee.middle_name %}{{ employee.middle_name }} {% endif %}{{ employee.last_name }}</h2>
+        </header>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">
+                            <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' }}"></i>
+                            {{ message }}
+                            <span class="close-btn" onclick="this.parentElement.style.display='none'">&times;</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <form id="employeeForm" action="{{ url_for('edit_employee', employee_id=employee.id) }}" method="POST" enctype="multipart/form-data">
+            <!-- Personal Information Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-user"></i>
+                    <h3>Personal Information</h3>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="unit">Unit</label>
+                        <input type="text" id="unit" name="unit" class="form-control" value="{{ employee.unit or '' }}">
+                    </div>
+                    
+                    <div class="form-group required">
+                        <label for="first_name">First Name</label>
+                        <input type="text" id="first_name" name="first_name" class="form-control" value="{{ employee.first_name or '' }}" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="middle_name">Middle Name</label>
+                        <input type="text" id="middle_name" name="middle_name" class="form-control" value="{{ employee.middle_name or '' }}">
+                    </div>
+                    
+                    <div class="form-group required">
+                        <label for="last_name">Last Name</label>
+                        <input type="text" id="last_name" name="last_name" class="form-control" value="{{ employee.last_name or '' }}" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="mobile_no">Mobile Number</label>
+                        <input type="tel" id="mobile_no" name="mobile_no" class="form-control" pattern="[0-9]{10}" value="{{ employee.mobile_no or '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="home_mobile_no">Home Mobile Number</label>
+                        <input type="tel" id="home_mobile_no" name="home_mobile_no" class="form-control" pattern="[0-9]{10}" value="{{ employee.home_mobile_no or '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="dob">Date of Birth</label>
+                        <input type="date" id="dob" name="dob" class="form-control" value="{{ employee.dob.strftime('%Y-%m-%d') if employee.dob else '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="doj">Date of Joining</label>
+                        <input type="date" id="doj" name="doj" class="form-control" value="{{ employee.doj.strftime('%Y-%m-%d') if employee.doj else '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="birth_place">Birth Place</label>
+                        <input type="text" id="birth_place" name="birth_place" class="form-control" value="{{ employee.birth_place or '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="dob_state">Birth State</label>
+                        <select id="dob_state" name="dob_state" class="form-control">
+                            <option value="">Select State</option>
+                            {% if states %}
+                                {% for state in states %}
+                                    <option value="{{ state[0] }}" 
+                                            {{ 'selected="selected"' if employee.dob_state_id and employee.dob_state_id == state[0] else '' }}>
+                                        {{ state[1] }}
+                                    </option>
+                                {% endfor %}
+                            {% endif %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="dob_district">Birth District</label>
+                        <select id="dob_district" name="dob_district" class="form-control">
+                            <option value="">Select District</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="designation">Designation</label>
+                        <select id="designation" name="designation" class="form-control">
+                            <option value="">Select Designation</option>
+                            {% if designations %}
+                                {% for designation in designations %}
+                                    {% set is_selected = (employee.designation_id and employee.designation_id == designation[0]) %}
+                                    <option value="{{ designation[0] }}" 
+                                            {{ 'selected="selected"' if is_selected else '' }}>
+                                        {{ designation[1] }} ({{ designation[2] }})
+                                    </option>
+                                {% endfor %}
+                            {% endif %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="gender">Gender</label>
+                        <select id="gender" name="gender" class="form-control">
+                            <option value="">Select Gender</option>
+                            <option value="Male" {{ 'selected' if employee.gender == 'Male' else '' }}>Male</option>
+                            <option value="Female" {{ 'selected' if employee.gender == 'Female' else '' }}>Female</option>
+                            <option value="Other" {{ 'selected' if employee.gender == 'Other' else '' }}>Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="marital_status">Marital Status</label>
+                        <select id="marital_status" name="marital_status" class="form-control">
+                            <option value="">Select Status</option>
+                            <option value="Single" {{ 'selected' if employee.marital_status == 'Single' else '' }}>Single</option>
+                            <option value="Married" {{ 'selected' if employee.marital_status == 'Married' else '' }}>Married</option>
+                            <option value="Divorced" {{ 'selected' if employee.marital_status == 'Divorced' else '' }}>Divorced</option>
+                            <option value="Widowed" {{ 'selected' if employee.marital_status == 'Widowed' else '' }}>Widowed</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="spouse_name">Spouse Name</label>
+                        <input type="text" id="spouse_name" name="spouse_name" class="form-control" value="{{ employee.spouse_name or '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="father_name">Father's Name</label>
+                        <input type="text" id="father_name" name="father_name" class="form-control" value="{{ employee.father_name or '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="mother_name">Mother's Name</label>
+                        <input type="text" id="mother_name" name="mother_name" class="form-control" value="{{ employee.mother_name or '' }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Education & Professional Information -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-graduation-cap"></i>
+                    <h3>Education & Professional Details</h3>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="education">Education</label>
+                        <input type="text" id="education" name="education" class="form-control" placeholder="e.g., B.Tech, MBA" value="{{ employee.education or '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="institute_name">Institute Name</label>
+                        <input type="text" id="institute_name" name="institute_name" class="form-control" value="{{ employee.institute_name or '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="pf_no">PF Number</label>
+                        <input type="text" id="pf_no" name="pf_no" class="form-control" value="{{ employee.pf_no or '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="esic_no">ESIC Number</label>
+                        <input type="text" id="esic_no" name="esic_no" class="form-control" value="{{ employee.esic_no or '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="uan_no">UAN Number</label>
+                        <input type="text" id="uan_no" name="uan_no" class="form-control" value="{{ employee.uan_no or '' }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Banking Information -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-university"></i>
+                    <h3>Banking Information</h3>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="bank_ac_no">Bank Account Number</label>
+                        <input type="text" id="bank_ac_no" name="bank_ac_no" class="form-control" value="{{ employee.bank_ac_no or '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ifsc_code">IFSC Code</label>
+                        <input type="text" id="ifsc_code" name="ifsc_code" class="form-control" pattern="^[A-Z]{4}0[A-Z0-9]{6}$" value="{{ employee.ifsc_code or '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="bank_name">Bank Name</label>
+                        <input type="text" id="bank_name" name="bank_name" class="form-control" value="{{ employee.bank_name or '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="bank_branch_name">Bank Branch Name</label>
+                        <input type="text" id="bank_branch_name" name="bank_branch_name" class="form-control" value="{{ employee.bank_branch_name or '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="name_in_passbook">Name in Bank Passbook</label>
+                        <input type="text" id="name_in_passbook" name="name_in_passbook" class="form-control" value="{{ employee.name_in_passbook or '' }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Government IDs -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-id-card"></i>
+                    <h3>Government IDs</h3>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="pan_no">PAN Number</label>
+                        <input type="text" id="pan_no" name="pan_no" class="form-control" pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}" value="{{ employee.pan_no or '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="voter_id_no">Voter ID Number</label>
+                        <input type="text" id="voter_id_no" name="voter_id_no" class="form-control" value="{{ employee.voter_id_no or '' }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Physical Details -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-user-md"></i>
+                    <h3>Physical Details</h3>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="blood_group">Blood Group</label>
+                        <select id="blood_group" name="blood_group" class="form-control">
+                            <option value="">Select Blood Group</option>
+                            <option value="A+" {{ 'selected' if employee.blood_group == 'A+' else '' }}>A+</option>
+                            <option value="A-" {{ 'selected' if employee.blood_group == 'A-' else '' }}>A-</option>
+                            <option value="B+" {{ 'selected' if employee.blood_group == 'B+' else '' }}>B+</option>
+                            <option value="B-" {{ 'selected' if employee.blood_group == 'B-' else '' }}>B-</option>
+                            <option value="AB+" {{ 'selected' if employee.blood_group == 'AB+' else '' }}>AB+</option>
+                            <option value="AB-" {{ 'selected' if employee.blood_group == 'AB-' else '' }}>AB-</option>
+                            <option value="O+" {{ 'selected' if employee.blood_group == 'O+' else '' }}>O+</option>
+                            <option value="O-" {{ 'selected' if employee.blood_group == 'O-' else '' }}>O-</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="shoe_size">Shoe Size</label>
+                        <input type="text" id="shoe_size" name="shoe_size" class="form-control" placeholder="e.g., 8, 9, 10" value="{{ employee.shoe_size or '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="waist">Waist (inches)</label>
+                        <input type="text" id="waist" name="waist" class="form-control" placeholder="e.g., 32, 34" value="{{ employee.waist or '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="height">Height (cm)</label>
+                        <input type="text" id="height" name="height" class="form-control" placeholder="e.g., 170, 175" value="{{ employee.height or '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="weight">Weight (kg)</label>
+                        <input type="text" id="weight" name="weight" class="form-control" placeholder="e.g., 65, 70" value="{{ employee.weight or '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="chest">Chest (inches)</label>
+                        <input type="text" id="chest" name="chest" class="form-control" placeholder="e.g., 38, 40" value="{{ employee.chest or '' }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Present Address -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <h3>Present Address</h3>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="present_address">Present Address</label>
+                        <textarea id="present_address" name="present_address" class="form-control" rows="3">{{ employee.present_address or '' }}</textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="present_state">State</label>
+                        <select id="present_state" name="present_state" class="form-control">
+                            <option value="">Select State</option>
+                            {% if states %}
+                                {% for state in states %}
+                                    <option value="{{ state[0] }}" 
+                                            {{ 'selected="selected"' if employee.present_state_id and employee.present_state_id == state[0] else '' }}>
+                                        {{ state[1] }}
+                                    </option>
+                                {% endfor %}
+                            {% endif %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="present_district">District</label>
+                        <select id="present_district" name="present_district" class="form-control">
+                            <option value="">Select District</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="present_pincode">Pincode</label>
+                        <input type="text" id="present_pincode" name="present_pincode" class="form-control" pattern="[0-9]{6}" value="{{ employee.present_pincode or '' }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Permanent Address -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-home"></i>
+                    <h3>Permanent Address</h3>
+                    <div class="copy-address-btn" onclick="copyPresentToPermanent()">
+                        <i class="fas fa-copy"></i> Copy from Present Address
+                    </div>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="permanent_address">Permanent Address</label>
+                        <textarea id="permanent_address" name="permanent_address" class="form-control" rows="3">{{ employee.permanent_address or '' }}</textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="permanent_post">Post Office</label>
+                        <input type="text" id="permanent_post" name="permanent_post" class="form-control" value="{{ employee.permanent_post or '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="permanent_police_thana">Police Thana</label>
+                        <input type="text" id="permanent_police_thana" name="permanent_police_thana" class="form-control" value="{{ employee.permanent_police_thana or '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="permanent_tehsil">Tehsil</label>
+                        <input type="text" id="permanent_tehsil" name="permanent_tehsil" class="form-control" value="{{ employee.permanent_tehsil or '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="permanent_state">State</label>
+                        <select id="permanent_state" name="permanent_state" class="form-control">
+                            <option value="">Select State</option>
+                            {% if states %}
+                                {% for state in states %}
+                                    <option value="{{ state[0] }}" 
+                                            {{ 'selected="selected"' if employee.permanent_state_id and employee.permanent_state_id == state[0] else '' }}>
+                                        {{ state[1] }}
+                                    </option>
+                                {% endfor %}
+                            {% endif %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="permanent_district">District</label>
+                        <select id="permanent_district" name="permanent_district" class="form-control">
+                            <option value="">Select District</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="permanent_pincode">Pincode</label>
+                        <input type="text" id="permanent_pincode" name="permanent_pincode" class="form-control" pattern="[0-9]{6}" value="{{ employee.permanent_pincode or '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="permanent_mobile_no">Mobile Number</label>
+                        <input type="tel" id="permanent_mobile_no" name="permanent_mobile_no" class="form-control" pattern="[0-9]{10}" value="{{ employee.permanent_mobile_no or '' }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Family Details -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-users"></i>
+                    <h3>Family Details</h3>
+                    <button type="button" class="add-btn" id="addFamilyBtn">
+                        <i class="fas fa-plus"></i> Add Family Member
+                    </button>
+                </div>
+                
+                <div id="family-members-container">
+                    {% for member in family_members %}
+                        <div class="family-member">
+                            <div class="family-member-header">
+                                <h4><i class="fas fa-user"></i> Family Member {{ loop.index }}</h4>
+                                <button type="button" class="remove-btn" onclick="window.removeFamilyMember(this)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                            <div class="family-member-fields">
+                                <div class="form-group">
+                                    <label>Name</label>
+                                    <input type="text" class="form-control family-name" value="{{ member[2] if member[2] else '' }}" placeholder="Enter name">
+                                </div>
+                                <div class="form-group">
+                                    <label>Relationship</label>
+                                    <select class="form-control family-relationship">
+                                        <option value="">Select Relationship</option>
+                                        <option value="Father" {{ 'selected' if member[3] == 'Father' else '' }}>Father</option>
+                                        <option value="Mother" {{ 'selected' if member[3] == 'Mother' else '' }}>Mother</option>
+                                        <option value="Spouse" {{ 'selected' if member[3] == 'Spouse' else '' }}>Spouse</option>
+                                        <option value="Son" {{ 'selected' if member[3] == 'Son' else '' }}>Son</option>
+                                        <option value="Daughter" {{ 'selected' if member[3] == 'Daughter' else '' }}>Daughter</option>
+                                        <option value="Brother" {{ 'selected' if member[3] == 'Brother' else '' }}>Brother</option>
+                                        <option value="Sister" {{ 'selected' if member[3] == 'Sister' else '' }}>Sister</option>
+                                        <option value="Other" {{ 'selected' if member[3] == 'Other' else '' }}>Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Aadhar Number</label>
+                                    <input type="text" class="form-control family-aadhar" value="{{ member[4] if member[4] else '' }}" placeholder="Enter Aadhar number">
+                                </div>
+                                <div class="form-group">
+                                    <label>Mobile Number</label>
+                                    <input type="tel" class="form-control family-mobile" value="{{ member[5] if member[5] else '' }}" placeholder="Enter mobile number">
+                                </div>
+                                <div class="form-group">
+                                    <label>Date of Birth</label>
+                                    <input type="date" class="form-control family-dob" value="{{ member[6].strftime('%Y-%m-%d') if member[6] else '' }}">
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Document Uploads -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-file-upload"></i>
+                    <h3>Document Uploads</h3>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="photo">Photo</label>
+                        <input type="file" id="photo" name="photo" class="form-control file-input" accept="image/*">
+                        <input type="hidden" name="existing_photo_path" value="{{ employee.photo_path or '' }}" class="hidden-input">
+                        <div class="file-info">Max size: 2MB, Formats: JPG, PNG</div>
+                        {% if employee.photo_path %}
+                            <div class="current-file-info">
+                                Current: <a href="{{ url_for('static', filename=employee.photo_path.replace('static/', '').replace('\\', '/')) }}" target="_blank">View Photo</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="signature">Signature</label>
+                        <input type="file" id="signature" name="signature" class="form-control file-input" accept="image/*">
+                        <input type="hidden" name="existing_signature_path" value="{{ employee.signature_path or '' }}" class="hidden-input">
+                        <div class="file-info">Max size: 1MB, Formats: JPG, PNG</div>
+                        {% if employee.signature_path %}
+                            <div class="current-file-info">
+                                Current: <a href="{{ url_for('static', filename=employee.signature_path.replace('static/', '').replace('\\', '/')) }}" target="_blank">View Signature</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="aadhar_front">Aadhar Front</label>
+                        <input type="file" id="aadhar_front" name="aadhar_front" class="form-control file-input" accept="image/*,application/pdf">
+                        <input type="hidden" name="existing_aadhar_front_path" value="{{ employee.aadhar_front_path or '' }}" class="hidden-input">
+                        <div class="file-info">Max size: 2MB, Formats: JPG, PNG, PDF</div>
+                        {% if employee.aadhar_front_path %}
+                            <div class="current-file-info">
+                                Current: <a href="{{ url_for('static', filename=employee.aadhar_front_path.replace('static/', '').replace('\\', '/')) }}" target="_blank">View Document</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="aadhar_back">Aadhar Back</label>
+                        <input type="file" id="aadhar_back" name="aadhar_back" class="form-control file-input" accept="image/*,application/pdf">
+                        <input type="hidden" name="existing_aadhar_back_path" value="{{ employee.aadhar_back_path or '' }}" class="hidden-input">
+                        <div class="file-info">Max size: 2MB, Formats: JPG, PNG, PDF</div>
+                        {% if employee.aadhar_back_path %}
+                            <div class="current-file-info">
+                                Current: <a href="{{ url_for('static', filename=employee.aadhar_back_path.replace('static/', '').replace('\\', '/')) }}" target="_blank">View Document</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="pan_photo">PAN Card</label>
+                        <input type="file" id="pan_photo" name="pan_photo" class="form-control file-input" accept="image/*,application/pdf">
+                        <input type="hidden" name="existing_pan_photo_path" value="{{ employee.pan_photo_path or '' }}" class="hidden-input">
+                        <div class="file-info">Max size: 2MB, Formats: JPG, PNG, PDF</div>
+                        {% if employee.pan_photo_path %}
+                            <div class="current-file-info">
+                                Current: <a href="{{ url_for('static', filename=employee.pan_photo_path.replace('static/', '').replace('\\', '/')) }}" target="_blank">View Document</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="bank_passbook">Bank Passbook</label>
+                        <input type="file" id="bank_passbook" name="bank_passbook" class="form-control file-input" accept="image/*,application/pdf">
+                        <input type="hidden" name="existing_bank_passbook_path" value="{{ employee.bank_passbook_path or '' }}" class="hidden-input">
+                        <div class="file-info">Max size: 2MB, Formats: JPG, PNG, PDF</div>
+                        {% if employee.bank_passbook_path %}
+                            <div class="current-file-info">
+                                Current: <a href="{{ url_for('static', filename=employee.bank_passbook_path.replace('static/', '').replace('\\', '/')) }}" target="_blank">View Document</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="certificate">Certificate</label>
+                        <input type="file" id="certificate" name="certificate" class="form-control file-input" accept="image/*,application/pdf">
+                        <input type="hidden" name="existing_certificate_path" value="{{ employee.certificate_path or '' }}" class="hidden-input">
+                        <div class="file-info">Max size: 5MB, Formats: JPG, PNG, PDF</div>
+                        {% if employee.certificate_path %}
+                            <div class="current-file-info">
+                                Current: <a href="{{ url_for('static', filename=employee.certificate_path.replace('static/', '').replace('\\', '/')) }}" target="_blank">View Document</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="form-actions">
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-save"></i>
+                    Update Employee Data
+                </button>
+                <a href="{{ url_for('view_employee', employee_id=employee.id) }}" class="reset-btn">
+                    <i class="fas fa-times"></i>
+                    Cancel
+                </a>
+            </div>
+
+            <!-- Hidden field for family details JSON -->
+            <input type="hidden" id="family_details" name="family_details">
+        </form>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p>Updating data...</p>
+    </div>
+
+    <script>
+        // Global variables
+        let familyMemberCount = {{ family_members|length if family_members else 0 }};
+        
+        // Employee data from database
+        const EMPLOYEE_DATA = {
+            dob_state_id: {{ employee.dob_state_id if employee.dob_state_id else 'null' }},
+            dob_district_id: {{ employee.dob_district_id if employee.dob_district_id else 'null' }},
+            present_state_id: {{ employee.present_state_id if employee.present_state_id else 'null' }},
+            present_district_id: {{ employee.present_district_id if employee.present_district_id else 'null' }},
+            permanent_state_id: {{ employee.permanent_state_id if employee.permanent_state_id else 'null' }},
+            permanent_district_id: {{ employee.permanent_district_id if employee.permanent_district_id else 'null' }}
+        };
+
+        // District loading function with proper error handling
+        function loadDistricts(stateId, districtSelectId, selectedDistrictId = null) {
+            console.log(`Loading districts for ${districtSelectId}, state: ${stateId}, target district: ${selectedDistrictId}`);
+            
+            if (!stateId) {
+                console.log('No state ID provided');
+                return;
+            }
+            
+            const districtSelect = document.getElementById(districtSelectId);
+            if (!districtSelect) {
+                console.error(`District select ${districtSelectId} not found`);
+                return;
+            }
+
+            // Show loading state
+            districtSelect.classList.add('loading');
+            districtSelect.innerHTML = '<option value="">Loading districts...</option>';
+            
+            fetch(`/api/districts/${stateId}`)
+                .then(response => {
+                    console.log(`API Response status: ${response.status}`);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const contentType = response.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {
+                        throw new Error('Response is not JSON');
+                    }
+                    
+                    return response.json();
+                })
+                .then(districts => {
+                    console.log(`Received ${districts.length} districts for state ${stateId}`);
+                    
+                    // Remove loading state
+                    districtSelect.classList.remove('loading');
+                    districtSelect.classList.add('loaded');
+                    
+                    // Clear and populate dropdown
+                    districtSelect.innerHTML = '<option value="">Select District</option>';
+                    
+                    if (!Array.isArray(districts)) {
+                        throw new Error('Districts data is not an array');
+                    }
+                    
+                    let selectedFound = false;
+                    districts.forEach(district => {
+                        if (!district.id || !district.name) {
+                            console.warn('Invalid district data:', district);
+                            return;
+                        }
+                        
+                        const option = document.createElement('option');
+                        option.value = district.id;
+                        option.textContent = district.name;
+                        
+                        // Select the target district
+                        if (selectedDistrictId && district.id == selectedDistrictId) {
+                            option.selected = true;
+                            selectedFound = true;
+                            console.log(`✓ Selected district: ${district.name} (ID: ${district.id})`);
+                        }
+                        
+                        districtSelect.appendChild(option);
+                    });
+                    
+                    if (selectedDistrictId && !selectedFound) {
+                        console.warn(`District ID ${selectedDistrictId} not found in state ${stateId}`);
+                    }
+                    
+                    console.log(`Successfully loaded ${districts.length} districts for ${districtSelectId}`);
+                })
+                .catch(error => {
+                    console.error(`Error loading districts for ${districtSelectId}:`, error);
+                    
+                    // Remove loading state and show error
+                    districtSelect.classList.remove('loading');
+                    districtSelect.classList.add('error');
+                    districtSelect.innerHTML = '<option value="">Error loading districts</option>';
+                    
+                    // Show user-friendly error message
+                    setTimeout(() => {
+                        alert(`Failed to load districts. Please refresh the page or contact support. Error: ${error.message}`);
+                    }, 100);
+                });
+        }
+
+        // Load initial districts on page load
+        function loadInitialDistricts() {
+            console.log('=== LOADING INITIAL DISTRICTS ===');
+            console.log('Employee data:', EMPLOYEE_DATA);
+            
+            // Load districts for birth state
+            if (EMPLOYEE_DATA.dob_state_id) {
+                setTimeout(() => {
+                    loadDistricts(EMPLOYEE_DATA.dob_state_id, 'dob_district', EMPLOYEE_DATA.dob_district_id);
+                }, 500);
+            }
+            
+            // Load districts for present state
+            if (EMPLOYEE_DATA.present_state_id) {
+                setTimeout(() => {
+                    loadDistricts(EMPLOYEE_DATA.present_state_id, 'present_district', EMPLOYEE_DATA.present_district_id);
+                }, 1000);
+            }
+            
+            // Load districts for permanent state
+            if (EMPLOYEE_DATA.permanent_state_id) {
+                setTimeout(() => {
+                    loadDistricts(EMPLOYEE_DATA.permanent_state_id, 'permanent_district', EMPLOYEE_DATA.permanent_district_id);
+                }, 1500);
+            }
+        }
+
+        // Setup state change listeners
+        function setupStateChangeListeners() {
+            console.log('Setting up state change listeners...');
+            
+            // Birth state change
+            const dobState = document.getElementById('dob_state');
+            if (dobState) {
+                dobState.addEventListener('change', function() {
+                    console.log('Birth state changed to:', this.value);
+                    if (this.value) {
+                        loadDistricts(this.value, 'dob_district', null);
+                    } else {
+                        const districtSelect = document.getElementById('dob_district');
+                        districtSelect.innerHTML = '<option value="">Select District</option>';
+                        districtSelect.classList.remove('loading', 'loaded', 'error');
+                    }
+                });
+            }
+
+            // Present state change
+            const presentState = document.getElementById('present_state');
+            if (presentState) {
+                presentState.addEventListener('change', function() {
+                    console.log('Present state changed to:', this.value);
+                    if (this.value) {
+                        loadDistricts(this.value, 'present_district', null);
+                    } else {
+                        const districtSelect = document.getElementById('present_district');
+                        districtSelect.innerHTML = '<option value="">Select District</option>';
+                        districtSelect.classList.remove('loading', 'loaded', 'error');
+                    }
+                });
+            }
+
+            // Permanent state change
+            const permanentState = document.getElementById('permanent_state');
+            if (permanentState) {
+                permanentState.addEventListener('change', function() {
+                    console.log('Permanent state changed to:', this.value);
+                    if (this.value) {
+                        loadDistricts(this.value, 'permanent_district', null);
+                    } else {
+                        const districtSelect = document.getElementById('permanent_district');
+                        districtSelect.innerHTML = '<option value="">Select District</option>';
+                        districtSelect.classList.remove('loading', 'loaded', 'error');
+                    }
+                });
+            }
+        }
+
+        // Family member functions
+        function addFamilyMember() {
+            familyMemberCount++;
+            const container = document.getElementById('family-members-container');
+            if (!container) {
+                console.error('Family members container not found');
+                return;
+            }
+
+            const memberHtml = `
+                <div class="family-member">
+                    <div class="family-member-header">
+                        <h4><i class="fas fa-user"></i> Family Member ${familyMemberCount}</h4>
+                        <button type="button" class="remove-btn" onclick="window.removeFamilyMember(this)">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    <div class="family-member-fields">
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" class="form-control family-name" placeholder="Enter name">
+                        </div>
+                        <div class="form-group">
+                            <label>Relationship</label>
+                            <select class="form-control family-relationship">
+                                <option value="">Select Relationship</option>
+                                <option value="Father">Father</option>
+                                <option value="Mother">Mother</option>
+                                <option value="Spouse">Spouse</option>
+                                <option value="Son">Son</option>
+                                <option value="Daughter">Daughter</option>
+                                <option value="Brother">Brother</option>
+                                <option value="Sister">Sister</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Aadhar Number</label>
+                            <input type="text" class="form-control family-aadhar" placeholder="Enter Aadhar number">
+                        </div>
+                        <div class="form-group">
+                            <label>Mobile Number</label>
+                            <input type="tel" class="form-control family-mobile" placeholder="Enter mobile number">
+                        </div>
+                        <div class="form-group">
+                            <label>Date of Birth</label>
+                            <input type="date" class="form-control family-dob">
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', memberHtml);
+            console.log('Added family member', familyMemberCount);
+        }
+
+        // Make functions globally accessible
+        window.removeFamilyMember = function(button) {
+            if (confirm('Are you sure you want to remove this family member?')) {
+                button.closest('.family-member').remove();
+                updateFamilyMemberNumbers();
+            }
+        };
+
+        function updateFamilyMemberNumbers() {
+            const familyCards = document.querySelectorAll('.family-member');
+            familyCards.forEach((card, index) => {
+                const header = card.querySelector('.family-member-header h4');
+                if (header) {
+                    header.innerHTML = `<i class="fas fa-user"></i> Family Member ${index + 1}`;
+                }
+            });
+            familyMemberCount = familyCards.length;
+        }
+
+        function collectFamilyDetails() {
+            const familyMembers = [];
+            const familyCards = document.querySelectorAll('.family-member');
+            
+            familyCards.forEach(card => {
+                const name = card.querySelector('.family-name').value.trim();
+                const relationship = card.querySelector('.family-relationship').value;
+                const aadhar = card.querySelector('.family-aadhar').value.trim();
+                const mobile = card.querySelector('.family-mobile').value.trim();
+                const dob = card.querySelector('.family-dob').value;
+                
+                if (name) {
+                    familyMembers.push({
+                        name: name,
+                        relationship: relationship,
+                        aadhar_no: aadhar,
+                        mobile_no: mobile,
+                        dob: dob
+                    });
+                }
+            });
+            
+            const familyDetailsInput = document.getElementById('family_details');
+            if (familyDetailsInput) {
+                familyDetailsInput.value = JSON.stringify(familyMembers);
+                console.log('Family details collected:', familyMembers.length, 'members');
+            }
+        }
+
+        // Make other functions globally accessible as well
+        window.copyPresentToPermanent = function() {
+            console.log('Copying present address to permanent...');
+            
+            // Copy address text
+            const presentAddress = document.getElementById('present_address');
+            const permanentAddress = document.getElementById('permanent_address');
+            if (presentAddress && permanentAddress) {
+                permanentAddress.value = presentAddress.value;
+            }
+
+            // Copy pincode
+            const presentPincode = document.getElementById('present_pincode');
+            const permanentPincode = document.getElementById('permanent_pincode');
+            if (presentPincode && permanentPincode) {
+                permanentPincode.value = presentPincode.value;
+            }
+
+            // Copy state and load districts
+            const presentState = document.getElementById('present_state');
+            const permanentState = document.getElementById('permanent_state');
+            if (presentState && permanentState && presentState.value) {
+                permanentState.value = presentState.value;
+                
+                // Load districts for the copied state
+                const presentDistrict = document.getElementById('present_district');
+                if (presentDistrict && presentDistrict.value) {
+                    loadDistricts(presentState.value, 'permanent_district', presentDistrict.value);
+                } else {
+                    loadDistricts(presentState.value, 'permanent_district', null);
+                }
+            }
+        };
+
+        // Page initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('=== EDIT EMPLOYEE PAGE LOADING ===');
+            console.log('Employee ID:', {{ employee.id if employee.id else 'null' }});
+            
+            // Setup event listeners
+            setupStateChangeListeners();
+            
+            // Setup form submission
+            const form = document.getElementById('employeeForm');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    collectFamilyDetails();
+                });
+            }
+
+            // Setup Add Family Member button
+            const addFamilyBtn = document.getElementById('addFamilyBtn');
+            if (addFamilyBtn) {
+                addFamilyBtn.addEventListener('click', addFamilyMember);
+            }
+            
+            // Load initial districts after page is fully loaded
+            setTimeout(() => {
+                loadInitialDistricts();
+            }, 2000);
+            
+            console.log('Page initialization complete');
+        });
+
+        // Global error handler for debugging
+        window.addEventListener('error', function(e) {
+            console.error('JavaScript Error:', e.error);
+            console.error('Error details:', {
+                message: e.message,
+                filename: e.filename,
+                line: e.lineno,
+                column: e.colno
+            });
+        });
+
+        console.log('Edit employee script loaded successfully');
+    </script>
+</body>
+</html>
