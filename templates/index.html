@@ -1,1 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Registration - MetroData</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Secret login button styles */
+        .secret-login-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 9999;
+        }
 
+        .secret-login-btn:hover {
+            opacity: 0.3;
+        }
+
+        .secret-login-btn.visible {
+            opacity: 0.1;
+        }
+
+        .secret-login-btn.visible:hover {
+            opacity: 0.5;
+            background: rgba(220, 38, 38, 0.1);
+            border-radius: 50%;
+        }
+
+        /* Secret sequence indicator */
+        .secret-indicator {
+            position: fixed;
+            top: 50px;
+            right: 10px;
+            background: rgba(220, 38, 38, 0.9);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 9998;
+        }
+
+        .secret-indicator.show {
+            opacity: 1;
+        }
+
+        /* Admin login modal */
+        .admin-login-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            backdrop-filter: blur(5px);
+        }
+
+        .admin-login-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .admin-login-content h2 {
+            color: #dc2626;
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+        }
+
+        .admin-login-content .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .admin-login-content label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .admin-login-content input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .admin-login-content input:focus {
+            border-color: #dc2626;
+            outline: none;
+        }
+
+        .admin-login-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .admin-login-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .admin-login-btn.primary {
+            background: #dc2626;
+            color: white;
+        }
+
+        .admin-login-btn.primary:hover {
+            background: #b91c1c;
+            transform: translateY(-2px);
+        }
+
+        .admin-login-btn.secondary {
+            background: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+
+        .admin-login-btn.secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .admin-error {
+            color: #dc2626;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            display: none;
+        }
+
+        /* Easter egg styles */
+        .konami-activated {
+            animation: rainbow 2s infinite;
+        }
+
+        @keyframes rainbow {
+            0% { filter: hue-rotate(0deg); }
+            25% { filter: hue-rotate(90deg); }
+            50% { filter: hue-rotate(180deg); }
+            75% { filter: hue-rotate(270deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+
+        /* Quick access hint */
+        .quick-hint {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 9997;
+        }
+
+        .quick-hint.show {
+            opacity: 1;
+        }
+
+        /* Uppercase text input styles */
+        .form-control[type="text"]:not(.no-uppercase),
+        .form-control[type="tel"]:not(.no-uppercase),
+        textarea.form-control:not(.no-uppercase) {
+            text-transform: uppercase;
+        }
+
+        /* Visual indicator for uppercase fields */
+        .form-group.uppercase-field {
+            position: relative;
+        }
+
+        .form-group.uppercase-field::after {
+            content: "ABC";
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #f1f5f9;
+            color: #64748b;
+            font-size: 10px;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: bold;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <!-- Secret login button (invisible by default) -->
+    <button class="secret-login-btn" id="secretLoginBtn" title="Admin Access">
+        <i class="fas fa-user-shield"></i>
+    </button>
+
+    <!-- Secret sequence indicator -->
+    <div class="secret-indicator" id="secretIndicator">
+        Secret sequence detected! 🔐
+    </div>
+
+    <!-- Quick access hint -->
+    <div class="quick-hint" id="quickHint">
+        Ctrl+Shift+A for admin access
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div class="admin-login-modal" id="adminLoginModal">
+        <div class="admin-login-content">
+            <h2><i class="fas fa-shield-alt"></i> Admin Access</h2>
+            <form id="adminLoginForm">
+                <div class="form-group">
+                    <label for="adminUsername">Username</label>
+                    <input type="text" id="adminUsername" name="username" autocomplete="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="adminPassword">Password</label>
+                    <input type="password" id="adminPassword" name="password" autocomplete="current-password" required>
+                </div>
+                <div class="admin-error" id="adminError">
+                    Invalid credentials. Please try again.
+                </div>
+                <div class="admin-login-buttons">
+                    <button type="button" class="admin-login-btn secondary" onclick="closeAdminModal()">
+                        Cancel
+                    </button>
+                    <button type="submit" class="admin-login-btn primary">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-building"></i>
+                <h1>MetroData</h1>
+            </div>
+            <h2>Employee Registration Form</h2>
+        </header>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">
+                            <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' }}"></i>
+                            {{ message }}
+                            <span class="close-btn" onclick="this.parentElement.style.display='none'">&times;</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <form id="employeeForm" action="/submit" method="POST" enctype="multipart/form-data">
+            <!-- Personal Information Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-user"></i>
+                    <h3>Personal Information</h3>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group uppercase-field">
+                        <label for="unit">Unit</label>
+                        <input type="text" id="unit" name="unit" class="form-control">
+                    </div>
+                    
+                    <div class="form-group required uppercase-field">
+                        <label for="first_name">First Name</label>
+                        <input type="text" id="first_name" name="first_name" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group uppercase-field">
+                        <label for="middle_name">Middle Name</label>
+                        <input type="text" id="middle_name" name="middle_name" class="form-control">
+                    </div>
+                    
+                    <div class="form-group required uppercase-field">
+                        <label for="last_name">Last Name</label>
+                        <input type="text" id="last_name" name="last_name" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="mobile_no">Mobile Number</label>
+                        <input type="tel" id="mobile_no" name="mobile_no" class="form-control no-uppercase" pattern="[0-9]{10}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="home_mobile_no">Home Mobile Number</label>
+                        <input type="tel" id="home_mobile_no" name="home_mobile_no" class="form-control no-uppercase" pattern="[0-9]{10}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="dob">Date of Birth</label>
+                        <input type="date" id="dob" name="dob" class="form-control">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="doj">Date of Joining</label>
+                        <input type="date" id="doj" name="doj" class="form-control">
+                    </div>
+                    
+                    <div class="form-group uppercase-field">
+                        <label for="birth_place">Birth Place</label>
+                        <input type="text" id="birth_place" name="birth_place" class="form-control">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="dob_state">Birth State</label>
+                        <select id="dob_state" name="dob_state" class="form-control">
+                            <option value="">Select State</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="dob_district">Birth District</label>
+                        <select id="dob_district" name="dob_district" class="form-control">
+                            <option value="">Select District</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="designation">Designation</label>
+                        <select id="designation" name="designation" class="form-control">
+                            <option value="">Select Designation</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="gender">Gender</label>
+                        <select id="gender" name="gender" class="form-control">
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="marital_status">Marital Status</label>
+                        <select id="marital_status" name="marital_status" class="form-control">
+                            <option value="">Select Status</option>
+                            <option value="Single">Single</option>
+                            <option value="Married">Married</option>
+                            <option value="Divorced">Divorced</option>
+                            <option value="Widowed">Widowed</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group uppercase-field">
+                        <label for="spouse_name">Spouse Name</label>
+                        <input type="text" id="spouse_name" name="spouse_name" class="form-control">
+                    </div>
+                    
+                    <div class="form-group uppercase-field">
+                        <label for="father_name">Father's Name</label>
+                        <input type="text" id="father_name" name="father_name" class="form-control">
+                    </div>
+                    
+                    <div class="form-group uppercase-field">
+                        <label for="mother_name">Mother's Name</label>
+                        <input type="text" id="mother_name" name="mother_name" class="form-control">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Education & Professional Information -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-graduation-cap"></i>
+                    <h3>Education & Professional Details</h3>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group uppercase-field">
+                        <label for="education">Education</label>
+                        <input type="text" id="education" name="education" class="form-control" placeholder="e.g., B.TECH, MBA">
+                    </div>
+                    
+                    <div class="form-group uppercase-field">
+                        <label for="institute_name">Institute Name</label>
+                        <input type="text" id="institute_name" name="institute_name" class="form-control">
+                    </div>
+                    
+                    <div class="form-group uppercase-field">
+                        <label for="pf_no">PF Number</label>
+                        <input type="text" id="pf_no" name="pf_no" class="form-control">
+                    </div>
+                    
+                    <div class="form-group uppercase-field">
+                        <label for="esic_no">ESIC Number</label>
+                        <input type="text" id="esic_no" name="esic_no" class="form-control">
+                    </div>
+                    
+                    <div class="form-group uppercase-field">
+                        <label for="uan_no">UAN Number</label>
+                        <input type="text" id="uan_no" name="uan_no" class="form-control">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Banking Information -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-university"></i>
+                    <h3>Banking Information</h3>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="bank_ac_no">Bank Account Number</label>
+                        <input type="text" id="bank_ac_no" name="bank_ac_no" class="form-control no-uppercase">
+                    </div>
+                    
+                    <div class="form-group uppercase-field">
+                        <label for="ifsc_code">IFSC Code</label>
+                        <input type="text" id="ifsc_code" name="ifsc_code" class="form-control" pattern="^[A-Z]{4}0[A-Z0-9]{6}$">
+                    </div>
+                    
+                    <div class="form-group uppercase-field">
+                        <label for="bank_name">Bank Name</label>
+                        <input type="text" id="bank_name" name="bank_name" class="form-control">
+                    </div>
+                    
+                    <div class="form-group uppercase-field">
+                        <label for="bank_branch_name">Bank Branch Name</label>
+                        <input type="text" id="bank_branch_name" name="bank_branch_name" class="form-control">
+                    </div>
+                    
+                    <div class="form-group uppercase-field">
+                        <label for="name_in_passbook">Name in Bank Passbook</label>
+                        <input type="text" id="name_in_passbook" name="name_in_passbook" class="form-control">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Government IDs -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-id-card"></i>
+                    <h3>Government IDs</h3>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group uppercase-field">
+                        <label for="pan_no">PAN Number</label>
+                        <input type="text" id="pan_no" name="pan_no" class="form-control" pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}">
+                    </div>
+                    
+                    <div class="form-group uppercase-field">
+                        <label for="voter_id_no">Voter ID Number</label>
+                        <input type="text" id="voter_id_no" name="voter_id_no" class="form-control">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Physical Details -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-user-md"></i>
+                    <h3>Physical Details</h3>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="blood_group">Blood Group</label>
+                        <select id="blood_group" name="blood_group" class="form-control">
+                            <option value="">Select Blood Group</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="shoe_size">Shoe Size</label>
+                        <input type="text" id="shoe_size" name="shoe_size" class="form-control no-uppercase" placeholder="e.g., 8, 9, 10">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="waist">Waist (inches)</label>
+                        <input type="text" id="waist" name="waist" class="form-control no-uppercase" placeholder="e.g., 32, 34">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="height">Height (cm)</label>
+                        <input type="text" id="height" name="height" class="form-control no-uppercase" placeholder="e.g., 170, 175">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="weight">Weight (kg)</label>
+                        <input type="text" id="weight" name="weight" class="form-control no-uppercase" placeholder="e.g., 65, 70">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="chest">Chest (inches)</label>
+                        <input type="text" id="chest" name="chest" class="form-control no-uppercase" placeholder="e.g., 38, 40">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Present Address -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <h3>Present Address</h3>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group full-width uppercase-field">
+                        <label for="present_address">Present Address</label>
+                        <textarea id="present_address" name="present_address" class="form-control" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="present_state">State</label>
+                        <select id="present_state" name="present_state" class="form-control">
+                            <option value="">Select State</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="present_district">District</label>
+                        <select id="present_district" name="present_district" class="form-control">
+                            <option value="">Select District</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="present_pincode">Pincode</label>
+                        <input type="text" id="present_pincode" name="present_pincode" class="form-control no-uppercase" pattern="[0-9]{6}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Permanent Address -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-home"></i>
+                    <h3>Permanent Address</h3>
+                    <div class="copy-address-btn" onclick="copyPresentToPermanent()">
+                        <i class="fas fa-copy"></i> Copy from Present Address
+                    </div>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group full-width uppercase-field">
+                        <label for="permanent_address">Permanent Address</label>
+                        <textarea id="permanent_address" name="permanent_address" class="form-control" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group uppercase-field">
+                        <label for="permanent_post">Post Office</label>
+                        <input type="text" id="permanent_post" name="permanent_post" class="form-control">
+                    </div>
+                    
+                    <div class="form-group uppercase-field">
+                        <label for="permanent_police_thana">Police Thana</label>
+                        <input type="text" id="permanent_police_thana" name="permanent_police_thana" class="form-control">
+                    </div>
+                    
+                    <div class="form-group uppercase-field">
+                        <label for="permanent_tehsil">Tehsil</label>
+                        <input type="text" id="permanent_tehsil" name="permanent_tehsil" class="form-control">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="permanent_state">State</label>
+                        <select id="permanent_state" name="permanent_state" class="form-control">
+                            <option value="">Select State</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="permanent_district">District</label>
+                        <select id="permanent_district" name="permanent_district" class="form-control">
+                            <option value="">Select District</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="permanent_pincode">Pincode</label>
+                        <input type="text" id="permanent_pincode" name="permanent_pincode" class="form-control no-uppercase" pattern="[0-9]{6}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="permanent_mobile_no">Mobile Number</label>
+                        <input type="tel" id="permanent_mobile_no" name="permanent_mobile_no" class="form-control no-uppercase" pattern="[0-9]{10}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Family Details -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-users"></i>
+                    <h3>Family Details</h3>
+                    <button type="button" class="add-btn" id="addFamilyBtn">
+                        <i class="fas fa-plus"></i> Add Family Member
+                    </button>
+                </div>
+                
+                <div id="family-members-container">
+                    <!-- Family members will be added dynamically -->
+                </div>
+            </div>
+
+            <!-- Document Uploads -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-file-upload"></i>
+                    <h3>Document Uploads</h3>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="photo">Photo</label>
+                        <input type="file" id="photo" name="photo" class="form-control file-input" accept="image/*">
+                        <div class="file-info">Max size: 2MB, Formats: JPG, PNG</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="signature">Signature</label>
+                        <input type="file" id="signature" name="signature" class="form-control file-input" accept="image/*">
+                        <div class="file-info">Max size: 1MB, Formats: JPG, PNG</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="aadhar_front">Aadhar Front</label>
+                        <input type="file" id="aadhar_front" name="aadhar_front" class="form-control file-input" accept="image/*,application/pdf">
+                        <div class="file-info">Max size: 2MB, Formats: JPG, PNG, PDF</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="aadhar_back">Aadhar Back</label>
+                        <input type="file" id="aadhar_back" name="aadhar_back" class="form-control file-input" accept="image/*,application/pdf">
+                        <div class="file-info">Max size: 2MB, Formats: JPG, PNG, PDF</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="pan_photo">PAN Card</label>
+                        <input type="file" id="pan_photo" name="pan_photo" class="form-control file-input" accept="image/*,application/pdf">
+                        <div class="file-info">Max size: 2MB, Formats: JPG, PNG, PDF</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="bank_passbook">Bank Passbook</label>
+                        <input type="file" id="bank_passbook" name="bank_passbook" class="form-control file-input" accept="image/*,application/pdf">
+                        <div class="file-info">Max size: 2MB, Formats: JPG, PNG, PDF</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="certificate">Certificate</label>
+                        <input type="file" id="certificate" name="certificate" class="form-control file-input" accept="image/*,application/pdf">
+                        <div class="file-info">Max size: 5MB, Formats: JPG, PNG, PDF</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="form-actions">
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-paper-plane"></i>
+                    Submit Employee Data
+                </button>
+                <button type="reset" class="reset-btn">
+                    <i class="fas fa-redo"></i>
+                    Reset Form
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p>Submitting data...</p>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    
+    <!-- Uppercase Text Input Script -->
+    <script>
+        // Function to convert text to uppercase
+        function convertToUppercase(event) {
+            const input = event.target;
+            if (!input.classList.contains('no-uppercase')) {
+                const cursorPosition = input.selectionStart;
+                const originalValue = input.value;
+                const upperValue = originalValue.toUpperCase();
+                
+                if (originalValue !== upperValue) {
+                    input.value = upperValue;
+                    // Restore cursor position
+                    input.setSelectionRange(cursorPosition, cursorPosition);
+                }
+            }
+        }
+
+        // Function to apply uppercase to all relevant inputs
+        function initializeUppercaseInputs() {
+            // Select all text inputs and textareas that should be uppercase
+            const textInputs = document.querySelectorAll('input[type="text"]:not(.no-uppercase), input[type="tel"]:not(.no-uppercase), textarea:not(.no-uppercase)');
+            
+            textInputs.forEach(input => {
+                // Convert on input (real-time)
+                input.addEventListener('input', convertToUppercase);
+                
+                // Also convert on paste
+                input.addEventListener('paste', function(event) {
+                    setTimeout(() => {
+                        convertToUppercase(event);
+                    }, 10);
+                });
+
+                // Convert existing value if any
+                if (input.value) {
+                    input.value = input.value.toUpperCase();
+                }
+            });
+        }
+
+        // Function to handle dynamically added family member inputs
+        function makeInputUppercase(input) {
+            if (!input.classList.contains('no-uppercase') && 
+                (input.type === 'text' || input.type === 'tel' || input.tagName.toLowerCase() === 'textarea')) {
+                
+                input.addEventListener('input', convertToUppercase);
+                input.addEventListener('paste', function(event) {
+                    setTimeout(() => {
+                        convertToUppercase(event);
+                    }, 10);
+                });
+
+                // Convert existing value
+                if (input.value) {
+                    input.value = input.value.toUpperCase();
+                }
+            }
+        }
+
+        // Override the original addFamilyMember function to handle uppercase
+        let originalAddFamilyMember;
+        
+        // Function to observe for new family member additions
+        function observeFamilyMembers() {
+            const familyContainer = document.getElementById('family-members-container');
+            if (familyContainer) {
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.type === 'childList') {
+                            mutation.addedNodes.forEach(function(node) {
+                                if (node.nodeType === Node.ELEMENT_NODE) {
+                                    // Find all text inputs in the new node
+                                    const newInputs = node.querySelectorAll('input[type="text"], input[type="tel"], textarea');
+                                    newInputs.forEach(makeInputUppercase);
+                                }
+                            });
+                        }
+                    });
+                });
+
+                observer.observe(familyContainer, {
+                    childList: true,
+                    subtree: true
+                });
+            }
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeUppercaseInputs();
+            observeFamilyMembers();
+        });
+
+        // Also initialize after page load to catch any late-loaded content
+        window.addEventListener('load', function() {
+            initializeUppercaseInputs();
+            observeFamilyMembers();
+        });
+    </script>
+    
+    <!-- Secret Admin Login Script -->
+    <script>
+        // Secret login functionality
+        let secretSequence = [];
+        const targetSequence = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'KeyB', 'KeyA']; // Konami Code
+        const simpleSequence = ['KeyA', 'KeyD', 'KeyM', 'KeyI', 'KeyN']; // ADMIN
+        let sequenceTimeout;
+
+        // Elements
+        const secretLoginBtn = document.getElementById('secretLoginBtn');
+        const secretIndicator = document.getElementById('secretIndicator');
+        const adminLoginModal = document.getElementById('adminLoginModal');
+        const adminLoginForm = document.getElementById('adminLoginForm');
+        const adminError = document.getElementById('adminError');
+        const quickHint = document.getElementById('quickHint');
+
+        // Show quick hint after 30 seconds
+        setTimeout(() => {
+            quickHint.classList.add('show');
+            setTimeout(() => {
+                quickHint.classList.remove('show');
+            }, 5000);
+        }, 30000);
+
+        // Secret sequence detection
+        document.addEventListener('keydown', function(e) {
+            // Clear timeout
+            clearTimeout(sequenceTimeout);
+            
+            // Add key to sequence
+            secretSequence.push(e.code);
+            
+            // Keep only last 10 keys
+            if (secretSequence.length > 10) {
+                secretSequence.shift();
+            }
+            
+            // Check for Konami code
+            if (arraysEqual(secretSequence.slice(-10), targetSequence)) {
+                activateKonamiMode();
+                showSecretButton();
+                return;
+            }
+            
+            // Check for simple ADMIN sequence
+            if (arraysEqual(secretSequence.slice(-5), simpleSequence)) {
+                showSecretButton();
+                return;
+            }
+            
+            // Clear sequence after 3 seconds of inactivity
+            sequenceTimeout = setTimeout(() => {
+                secretSequence = [];
+            }, 3000);
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+Shift+A = Admin login
+            if (e.ctrlKey && e.shiftKey && e.code === 'KeyA') {
+                e.preventDefault();
+                showAdminModal();
+            }
+            
+            // Escape = Close modal
+            if (e.code === 'Escape') {
+                closeAdminModal();
+            }
+        });
+
+        // Triple click on logo for admin access
+        let logoClickCount = 0;
+        let logoClickTimer;
+        
+        document.querySelector('.logo').addEventListener('click', function() {
+            logoClickCount++;
+            
+            if (logoClickCount === 1) {
+                logoClickTimer = setTimeout(() => {
+                    logoClickCount = 0;
+                }, 1000);
+            } else if (logoClickCount === 3) {
+                clearTimeout(logoClickTimer);
+                logoClickCount = 0;
+                showSecretButton();
+            }
+        });
+
+        // Functions
+        function arraysEqual(a, b) {
+            return a.length === b.length && a.every((val, i) => val === b[i]);
+        }
+
+        function activateKonamiMode() {
+            document.body.classList.add('konami-activated');
+            setTimeout(() => {
+                document.body.classList.remove('konami-activated');
+            }, 5000);
+            
+            // Show special message
+            showSecretIndicator('🎮 Konami Code Activated! 🎮');
+        }
+
+        function showSecretButton() {
+            secretLoginBtn.classList.add('visible');
+            showSecretIndicator();
+        }
+
+        function showSecretIndicator(customMessage = null) {
+            secretIndicator.textContent = customMessage || 'Secret sequence detected! 🔐';
+            secretIndicator.classList.add('show');
+            
+            setTimeout(() => {
+                secretIndicator.classList.remove('show');
+            }, 3000);
+        }
+
+        function showAdminModal() {
+            adminLoginModal.style.display = 'block';
+            document.getElementById('adminUsername').focus();
+            adminError.style.display = 'none';
+        }
+
+        function closeAdminModal() {
+            adminLoginModal.style.display = 'none';
+            adminLoginForm.reset();
+            adminError.style.display = 'none';
+        }
+
+        // Secret button click
+        secretLoginBtn.addEventListener('click', showAdminModal);
+
+        // Admin login form submission
+        adminLoginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+            
+            // Simple client-side check (should be server-side in production)
+            if (username === 'admin' && password === 'metro@123') {
+                // Redirect to admin dashboard
+                window.location.href = '/admin/dashboard';
+            } else {
+                // Send to server for verification
+                fetch('/admin/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Check if response redirects to dashboard
+                        if (response.url.includes('/admin/dashboard')) {
+                            window.location.href = '/admin/dashboard';
+                        } else {
+                            return response.text();
+                        }
+                    } else {
+                        throw new Error('Login failed');
+                    }
+                })
+                .then(text => {
+                    if (text && text.includes('dashboard')) {
+                        window.location.href = '/admin/dashboard';
+                    } else {
+                        showLoginError();
+                    }
+                })
+                .catch(error => {
+                    showLoginError();
+                });
+            }
+        });
+
+        function showLoginError() {
+            adminError.style.display = 'block';
+            document.getElementById('adminPassword').value = '';
+            document.getElementById('adminPassword').focus();
+        }
+
+        // Close modal when clicking outside
+        adminLoginModal.addEventListener('click', function(e) {
+            if (e.target === adminLoginModal) {
+                closeAdminModal();
+            }
+        });
+
+        // Make functions global for onclick handlers
+        window.closeAdminModal = closeAdminModal;
+        window.showAdminModal = showAdminModal;
+
+        // Test if script loaded
+        window.addEventListener('load', function() {
+            console.log('Page fully loaded');
+            console.log('Secret admin login system active');
+            console.log('Try: Ctrl+Shift+A, Triple-click logo, or type ADMIN');
+        });
+    </script>
+    
+    <!-- Fallback JavaScript for debugging -->
+    <script>
+        // Test if script loaded
+        window.addEventListener('load', function() {
+            console.log('Page fully loaded');
+            console.log('addFamilyMember function available:', typeof addFamilyMember);
+        });
+    </script>
+</body>
+</html>
