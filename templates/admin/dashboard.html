@@ -1,1 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - MetroData</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8fafc;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-content {
+            max-width: 1400px; /* Increased from 1200px */
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo i {
+            font-size: 2rem;
+        }
+
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .admin-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            position: relative;
+        }
+
+        .search-box input {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 20px;
+            width: 250px;
+            position: relative;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            pointer-events: none;
+        }
+
+        .search-loading {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .search-loading.active {
+            display: block;
+        }
+
+        .search-loading i {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .container {
+            max-width: 1400px; /* Increased from 1200px */
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-header h2 {
+            color: #333;
+            font-size: 1.8rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .add-employee-btn, .print-btn {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .print-btn {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        }
+
+        .add-employee-btn:hover, .print-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220, 38, 38, 0.3);
+        }
+
+        .print-btn:hover {
+            box-shadow: 0 5px 15px rgba(5, 150, 105, 0.3);
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                font-family: Arial, sans-serif;
+                font-size: 12px;
+                line-height: 1.4;
+                color: #000;
+                background: white;
+            }
+
+            .header,
+            .search-box,
+            .admin-info,
+            .logout-btn,
+            .flash-messages,
+            .search-results,
+            .section-header .header-actions,
+            .btn,
+            .actions {
+                display: none !important;
+            }
+
+            .container {
+                max-width: none;
+                margin: 0;
+                padding: 0;
+            }
+
+            .employees-table {
+                box-shadow: none;
+                border-radius: 0;
+                margin: 0;
+            }
+
+            .table-header {
+                background: #f8f8f8 !important;
+                border: 1px solid #000;
+                padding: 10px;
+                text-align: center;
+            }
+
+            .table-header h3 {
+                margin: 0;
+                font-size: 16px;
+                font-weight: bold;
+            }
+
+            table {
+                border-collapse: collapse;
+                width: 100%;
+                border: 1px solid #000;
+            }
+
+            th, td {
+                border: 1px solid #000;
+                padding: 8px;
+                text-align: left;
+                font-size: 11px;
+                vertical-align: top;
+            }
+
+            th {
+                background: #f0f0f0 !important;
+                font-weight: bold;
+                text-align: center;
+            }
+
+            .employee-photo,
+            .no-photo {
+                width: 30px !important;
+                height: 30px !important;
+                border-radius: 50%;
+            }
+
+            .employee-name {
+                font-weight: bold;
+                font-size: 11px;
+            }
+
+            .employee-unit {
+                font-size: 9px;
+                color: #666;
+            }
+
+            .no-employees {
+                text-align: center;
+                padding: 20px;
+                font-style: italic;
+            }
+
+            /* Print header */
+            .print-header {
+                display: block !important;
+                text-align: center;
+                margin-bottom: 20px;
+                border-bottom: 2px solid #000;
+                padding-bottom: 10px;
+            }
+
+            .print-header h1 {
+                margin: 0;
+                font-size: 24px;
+                font-weight: bold;
+            }
+
+            .print-header .print-subtitle {
+                margin: 5px 0;
+                font-size: 16px;
+                color: #666;
+            }
+
+            .print-header .print-date {
+                margin: 0;
+                font-size: 12px;
+                color: #888;
+            }
+
+            /* Hide photo column in print for space */
+            .photo-column {
+                display: none !important;
+            }
+        }
+
+        .employees-table {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            width: 100%; /* Ensure full width */
+        }
+
+        .table-header {
+            background: #f8fafc;
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .table-header h3 {
+            color: #333;
+            font-size: 1.3rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            /* Remove any width restrictions */
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1200px; /* Set minimum width for wider table */
+        }
+
+        th {
+            background: #f8fafc;
+            padding: 18px; /* Increased padding */
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e2e8f0;
+            white-space: nowrap; /* Prevent text wrapping in headers */
+        }
+
+        td {
+            padding: 18px; /* Increased padding */
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: middle;
+        }
+
+        /* Specific column widths for better distribution */
+        .photo-column {
+            width: 80px;
+            text-align: center;
+        }
+
+        .name-column {
+            width: 200px; /* Increased width for name column */
+            min-width: 180px;
+        }
+
+        .unit-column {
+            width: 150px;
+            min-width: 120px;
+        }
+
+        .mobile-column {
+            width: 140px;
+            min-width: 120px;
+        }
+
+        .date-column {
+            width: 130px;
+            min-width: 110px;
+        }
+
+        .designation-column {
+            width: 180px; /* Increased width for designation */
+            min-width: 150px;
+        }
+
+        .actions-column {
+            width: 300px; /* Increased width for actions */
+            min-width: 250px;
+        }
+
+        tr:hover {
+            background: #f8fafc;
+        }
+
+        .employee-photo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #e2e8f0;
+        }
+
+        .no-photo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 1.5rem;
+            margin: 0 auto; /* Center the no-photo div */
+        }
+
+        .employee-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 1rem; /* Slightly larger font */
+        }
+
+        .employee-unit {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 8px 12px; /* Increased button padding */
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        .btn-view {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-view:hover {
+            background: #2563eb;
+        }
+
+        .btn-edit {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background: #d97706;
+        }
+
+        .btn-print {
+            background: #059669;
+            color: white;
+        }
+
+        .btn-print:hover {
+            background: #047857;
+        }
+
+        .btn-delete {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #dc2626;
+        }
+
+        .no-employees {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .no-employees i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #d1d5db;
+        }
+
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+
+        .flash-message {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .flash-message.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        .flash-message.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        .search-results {
+            background: #e0f2fe;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #0284c7;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                max-width: 100%;
+                padding: 20px 15px;
+            }
+            
+            .header-content {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .search-box {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .search-box input {
+                width: 100%;
+            }
+
+            .section-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .header-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .add-employee-btn,
+            .print-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .table-container {
+                font-size: 0.9rem;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            /* Make table responsive on mobile */
+            table {
+                min-width: 800px; /* Reduce minimum width on mobile */
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <h1>Admin Panel</h1>
+            </div>
+            
+            <div class="admin-info">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Search employees..." value="{{ search_term or '' }}" autocomplete="off">
+                    <div class="search-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div class="search-loading" id="searchLoading">
+                        <i class="fas fa-spinner"></i>
+                    </div>
+                </div>
+                
+                <a href="{{ url_for('admin_logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">
+                            <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' }}"></i>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Search Results -->
+        {% if search_term %}
+            <div class="search-results">
+                <i class="fas fa-search"></i>
+                Search results for "{{ search_term }}" - {{ employees|length }} employee(s) found
+                <a href="{{ url_for('admin_dashboard') }}" style="float: right; color: #0284c7;">Clear Search</a>
+            </div>
+        {% endif %}
+
+        <!-- Employees Table -->
+        <div class="section-header">
+            <h2>Employee Records</h2>
+            <div class="header-actions">
+                <a href="{{ url_for('index') }}" class="add-employee-btn">
+                    <i class="fas fa-plus"></i>
+                    Add New Employee
+                </a>
+            </div>
+        </div>
+
+        <!-- Print Header (hidden on screen) -->
+        <div class="print-header" style="display: none;">
+            <h1>MetroData - Employee Directory</h1>
+            <div class="print-subtitle">Complete Employee List</div>
+            <div class="print-date">Printed on: <span id="printDate"></span></div>
+        </div>
+
+        <div class="employees-table">
+            <div class="table-header">
+                <h3 id="tableTitle">All Employees ({{ employees|length }})</h3>
+            </div>
+            
+            <div class="table-container" id="employeeTableContainer">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="photo-column">Photo</th>
+                            <th class="name-column">Name & ID</th>
+                            <th class="unit-column">Unit</th>
+                            <th class="mobile-column">Mobile</th>
+                            <th class="date-column">Date of Joining</th>
+                            <th class="designation-column">Designation</th>
+                            <th class="actions-column">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="employeeTableBody">
+                        {% if employees %}
+                            {% for employee in employees %}
+                            <tr>
+                                <td class="photo-column">
+                                    {% if employee.photo_path %}
+                                        <img src="{{ url_for('static', filename=employee.photo_path.replace('static/', '').replace('\\', '/')) }}" 
+                                             alt="Photo" class="employee-photo" 
+                                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                        <div class="no-photo" style="display: none;">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                    {% else %}
+                                        <div class="no-photo">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                                <td class="name-column">
+                                    <div class="employee-name">{{ employee.full_name }}</div>
+                                    <div class="employee-unit">ID: {{ employee.id }}</div>
+                                </td>
+                                <td class="unit-column">{{ employee.unit or 'N/A' }}</td>
+                                <td class="mobile-column">{{ employee.mobile_no or 'N/A' }}</td>
+                                <td class="date-column">{{ employee.doj.strftime('%d/%m/%Y') if employee.doj else 'N/A' }}</td>
+                                <td class="designation-column">
+                                    <div>{{ employee.designation or 'N/A' }}</div>
+                                    <div class="employee-unit">{{ employee.department or '' }}</div>
+                                </td>
+                                <td class="actions-column">
+                                    <div class="actions">
+                                        <a href="{{ url_for('view_employee', employee_id=employee.id) }}" class="btn btn-view">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        <a href="{{ url_for('edit_employee', employee_id=employee.id) }}" class="btn btn-edit">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
+                                        <button onclick="printEmployee({{ employee.id }})" class="btn btn-print">
+                                            <i class="fas fa-print"></i> Print
+                                        </button>
+                                        <form method="POST" action="{{ url_for('delete_employee', employee_id=employee.id) }}" 
+                                              style="display: inline;"
+                                              onsubmit="return confirm('Are you sure you want to delete {{ employee.full_name }}? This action cannot be undone.')">
+                                            <button type="submit" class="btn btn-delete">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="no-employees">
+                                    <i class="fas fa-users"></i>
+                                    <h3>No employees found</h3>
+                                    <p>{% if search_term %}Try adjusting your search terms{% else %}Start by adding your first employee{% endif %}</p>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Real-time search functionality
+        let searchTimeout;
+        const searchInput = document.getElementById('searchInput');
+        const searchLoading = document.getElementById('searchLoading');
+        const searchIcon = document.querySelector('.search-icon');
+        const tableTitle = document.getElementById('tableTitle');
+        const tableBody = document.getElementById('employeeTableBody');
+        const searchResults = document.querySelector('.search-results');
+
+        // Store original employees data for client-side filtering
+        const originalEmployees = [
+            {% for employee in employees %}
+            {
+                id: {{ employee.id }},
+                full_name: "{{ employee.full_name }}",
+                unit: "{{ employee.unit or '' }}",
+                mobile_no: "{{ employee.mobile_no or '' }}",
+                doj: "{{ employee.doj.strftime('%d/%m/%Y') if employee.doj else '' }}",
+                designation: "{{ employee.designation or '' }}",
+                department: "{{ employee.department or '' }}",
+                photo_path: "{{ employee.photo_path or '' }}"
+            }{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ];
+
+        // Client-side search function (fallback)
+        function performClientSearch(query) {
+            query = query.toLowerCase().trim();
+            
+            if (query === '') {
+                // Show all employees
+                updateTable(originalEmployees, '');
+                hideSearchResults();
+                tableTitle.textContent = `All Employees (${originalEmployees.length})`;
+                return;
+            }
+
+            // Filter employees based on query
+            const filteredEmployees = originalEmployees.filter(employee => {
+                return (
+                    employee.full_name.toLowerCase().includes(query) ||
+                    employee.unit.toLowerCase().includes(query) ||
+                    employee.mobile_no.includes(query) ||
+                    employee.designation.toLowerCase().includes(query) ||
+                    employee.department.toLowerCase().includes(query) ||
+                    employee.id.toString().includes(query)
+                );
+            });
+
+            updateTable(filteredEmployees, query);
+            updateSearchResults(query, filteredEmployees.length);
+        }
+
+        // Debounced search function
+        function performSearch(query) {
+            // Clear existing timeout
+            clearTimeout(searchTimeout);
+            
+            // Set new timeout for 200ms delay (faster for client-side)
+            searchTimeout = setTimeout(() => {
+                // Show loading state
+                searchIcon.style.display = 'none';
+                searchLoading.classList.add('active');
+
+                // Try AJAX first, fallback to client-side search
+                if (query.trim() === '') {
+                    performClientSearch(query);
+                    searchLoading.classList.remove('active');
+                    searchIcon.style.display = 'block';
+                    return;
+                }
+
+                // Try AJAX request
+                fetch(`{{ url_for('search_employees') }}?q=${encodeURIComponent(query)}&ajax=1`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Backend search not available');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        updateTable(data.employees, query);
+                        updateSearchResults(query, data.employees.length);
+                    })
+                    .catch(error => {
+                        console.log('Using client-side search fallback');
+                        // Fallback to client-side search
+                        performClientSearch(query);
+                    })
+                    .finally(() => {
+                        // Hide loading state
+                        searchLoading.classList.remove('active');
+                        searchIcon.style.display = 'block';
+                    });
+            }, 200);
+        }
+
+        // Update table with search results
+        function updateTable(employees, query) {
+            if (employees.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="no-employees">
+                            <i class="fas fa-users"></i>
+                            <h3>No employees found</h3>
+                            <p>Try adjusting your search terms</p>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                tableBody.innerHTML = employees.map(employee => `
+                    <tr>
+                        <td class="photo-column">
+                            ${employee.photo_path ? 
+                                `<img src="{{ url_for('static', filename='') }}${employee.photo_path.replace('static/', '').replace(/\\\\/g, '/')}" 
+                                     alt="Photo" class="employee-photo" 
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                 <div class="no-photo" style="display: none;">
+                                     <i class="fas fa-user"></i>
+                                 </div>` :
+                                `<div class="no-photo">
+                                     <i class="fas fa-user"></i>
+                                 </div>`
+                            }
+                        </td>
+                        <td class="name-column">
+                            <div class="employee-name">${employee.full_name}</div>
+                            <div class="employee-unit">ID: ${employee.id}</div>
+                        </td>
+                        <td class="unit-column">${employee.unit || 'N/A'}</td>
+                        <td class="mobile-column">${employee.mobile_no || 'N/A'}</td>
+                        <td class="date-column">${employee.doj || 'N/A'}</td>
+                        <td class="designation-column">
+                            <div>${employee.designation || 'N/A'}</div>
+                            <div class="employee-unit">${employee.department || ''}</div>
+                        </td>
+                        <td class="actions-column">
+                            <div class="actions">
+                                <a href="/admin/employee/${employee.id}" class="btn btn-view">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                                <a href="/admin/employee/${employee.id}/edit" class="btn btn-edit">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                <button onclick="printEmployee(${employee.id})" class="btn btn-print">
+                                    <i class="fas fa-print"></i> Print
+                                </button>
+                                <form method="POST" action="/admin/employee/${employee.id}/delete" 
+                                      style="display: inline;"
+                                      onsubmit="return confirm('Are you sure you want to delete ${employee.full_name}? This action cannot be undone.')">
+                                    <button type="submit" class="btn btn-delete">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+            
+            if (query) {
+                tableTitle.textContent = `Search Results (${employees.length})`;
+            } else {
+                tableTitle.textContent = `All Employees (${employees.length})`;
+            }
+        }
+
+        // Update search results banner
+        function updateSearchResults(query, count) {
+            let banner = document.querySelector('.search-results');
+            
+            if (banner) {
+                banner.innerHTML = `
+                    <i class="fas fa-search"></i>
+                    Search results for "${query}" - ${count} employee(s) found
+                    <button onclick="clearSearch()" style="float: right; background: none; border: none; color: #0284c7; cursor: pointer;">Clear Search</button>
+                `;
+                banner.style.display = 'block';
+            } else {
+                // Create search results banner if it doesn't exist
+                banner = document.createElement('div');
+                banner.className = 'search-results';
+                banner.innerHTML = `
+                    <i class="fas fa-search"></i>
+                    Search results for "${query}" - ${count} employee(s) found
+                    <button onclick="clearSearch()" style="float: right; background: none; border: none; color: #0284c7; cursor: pointer;">Clear Search</button>
+                `;
+                
+                const container = document.querySelector('.container');
+                const flashMessages = document.querySelector('.flash-messages');
+                if (flashMessages && flashMessages.nextElementSibling) {
+                    flashMessages.insertAdjacentElement('afterend', banner);
+                } else {
+                    const sectionHeader = document.querySelector('.section-header');
+                    if (sectionHeader) {
+                        sectionHeader.insertAdjacentElement('beforebegin', banner);
+                    }
+                }
+            }
+        }
+
+        // Hide search results banner
+        function hideSearchResults() {
+            const banner = document.querySelector('.search-results');
+            if (banner) {
+                banner.style.display = 'none';
+            }
+        }
+
+        // Clear search function
+        function clearSearch() {
+            searchInput.value = '';
+            performClientSearch('');
+            hideSearchResults();
+        }
+
+        // Event listeners
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value;
+            performSearch(query);
+        });
+
+        // Clear search on Escape key
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                clearSearch();
+            }
+        });
+
+        // Focus search input on Ctrl+F or Cmd+F
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                searchInput.focus();
+                searchInput.select();
+            }
+        });
+
+        // Auto-focus search input if there's a search term
+        const initialSearchTerm = "{{ search_term or '' }}";
+        if (initialSearchTerm.trim() !== '') {
+            searchInput.focus();
+            performSearch(initialSearchTerm);
+        }
+
+        // Print individual employee function
+        function printEmployee(employeeId) {
+            // Open a new window with the print view
+            const printWindow = window.open(`/admin/employee/${employeeId}/print`, '_blank', 'width=800,height=1000,scrollbars=yes,resizable=yes');
+            
+            // Fallback if the print route doesn't exist - create print view dynamically
+            if (!printWindow) {
+                // If popup blocked, try alternative method
+                window.open(`/admin/employee/${employeeId}?print=1`, '_blank');
+                return;
+            }
+
+            // Wait for the window to load, then trigger print
+            printWindow.addEventListener('load', function() {
+                setTimeout(() => {
+                    printWindow.print();
+                }, 500);
+            });
+        }
+
+        // Alternative print function using current page data
+        function printEmployeeFromData(employeeId) {
+            // Find employee data from current page
+            const employee = originalEmployees.find(emp => emp.id == employeeId);
+            if (!employee) {
+                alert('Employee data not found');
+                return;
+            }
+
+            // Create print window with employee data
+            const printWindow = window.open('', '_blank', 'width=800,height=1000,scrollbars=yes,resizable=yes');
+            
+            const printContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Employee Details - ${employee.full_name}</title>
+                    <style>
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            padding: 20px; 
+                            background: white;
+                            color: #000;
+                        }
+                        .print-header {
+                            text-align: center;
+                            border-bottom: 3px solid #dc2626;
+                            padding-bottom: 15px;
+                            margin-bottom: 30px;
+                        }
+                        .print-header h1 {
+                            color: #dc2626;
+                            font-size: 28px;
+                            margin-bottom: 5px;
+                        }
+                        .print-header .subtitle {
+                            color: #666;
+                            font-size: 16px;
+                        }
+                        .employee-header {
+                            background: #f8f9fa;
+                            padding: 20px;
+                            border-radius: 8px;
+                            margin-bottom: 25px;
+                            border: 1px solid #dee2e6;
+                        }
+                        .employee-name {
+                            font-size: 24px;
+                            font-weight: bold;
+                            color: #dc2626;
+                            margin-bottom: 10px;
+                        }
+                        .employee-id {
+                            font-size: 14px;
+                            color: #666;
+                            margin-bottom: 15px;
+                        }
+                        .employee-basic {
+                            display: grid;
+                            grid-template-columns: repeat(3, 1fr);
+                            gap: 15px;
+                        }
+                        .basic-item {
+                            text-align: center;
+                        }
+                        .basic-label {
+                            font-weight: bold;
+                            color: #495057;
+                            font-size: 12px;
+                            text-transform: uppercase;
+                            margin-bottom: 5px;
+                        }
+                        .basic-value {
+                            color: #212529;
+                            font-size: 14px;
+                        }
+                        .details-section {
+                            margin-bottom: 25px;
+                        }
+                        .section-title {
+                            font-size: 18px;
+                            font-weight: bold;
+                            color: #dc2626;
+                            margin-bottom: 15px;
+                            padding-bottom: 5px;
+                            border-bottom: 2px solid #dc2626;
+                        }
+                        .details-grid {
+                            display: grid;
+                            grid-template-columns: repeat(2, 1fr);
+                            gap: 15px;
+                        }
+                        .detail-item {
+                            padding: 10px;
+                            border: 1px solid #e9ecef;
+                            border-radius: 4px;
+                        }
+                        .detail-label {
+                            font-weight: bold;
+                            color: #495057;
+                            font-size: 12px;
+                            margin-bottom: 3px;
+                        }
+                        .detail-value {
+                            color: #212529;
+                            font-size: 14px;
+                        }
+                        .print-footer {
+                            margin-top: 40px;
+                            text-align: center;
+                            color: #6c757d;
+                            font-size: 12px;
+                            border-top: 1px solid #dee2e6;
+                            padding-top: 15px;
+                        }
+                        @media print {
+                            body { padding: 0; }
+                            .print-btn { display: none; }
+                        }
+                        .print-btn {
+                            position: fixed;
+                            top: 20px;
+                            right: 20px;
+                            background: #dc2626;
+                            color: white;
+                            border: none;
+                            padding: 10px 20px;
+                            border-radius: 5px;
+                            cursor: pointer;
+                            font-weight: bold;
+                        }
+                        .print-btn:hover {
+                            background: #b91c1c;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <button class="print-btn" onclick="window.print()">🖨️ Print</button>
+                    
+                    <div class="print-header">
+                        <h1>MetroData</h1>
+                        <div class="subtitle">Employee Information Report</div>
+                    </div>
+
+                    <div class="employee-header">
+                        <div class="employee-name">${employee.full_name}</div>
+                        <div class="employee-id">Employee ID: ${employee.id}</div>
+                        <div class="employee-basic">
+                            <div class="basic-item">
+                                <div class="basic-label">Unit</div>
+                                <div class="basic-value">${employee.unit || 'N/A'}</div>
+                            </div>
+                            <div class="basic-item">
+                                <div class="basic-label">Mobile</div>
+                                <div class="basic-value">${employee.mobile_no || 'N/A'}</div>
+                            </div>
+                            <div class="basic-item">
+                                <div class="basic-label">Date of Joining</div>
+                                <div class="basic-value">${employee.doj || 'N/A'}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="details-section">
+                        <div class="section-title">Professional Information</div>
+                        <div class="details-grid">
+                            <div class="detail-item">
+                                <div class="detail-label">Designation</div>
+                                <div class="detail-value">${employee.designation || 'N/A'}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Department</div>
+                                <div class="detail-value">${employee.department || 'N/A'}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="print-footer">
+                        <div>Generated on: ${new Date().toLocaleDateString('en-IN', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })}</div>
+                        <div>MetroData Employee Management System</div>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            
+            // Auto print after loading
+            setTimeout(() => {
+                printWindow.print();
+            }, 500);
+        }
+
+        // Make print function global
+        window.printEmployee = printEmployee;
+        window.printEmployeeFromData = printEmployeeFromData;
+    </script>
+</body>
+</html>
